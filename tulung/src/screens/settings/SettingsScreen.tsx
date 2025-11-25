@@ -131,7 +131,11 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <ScrollView style={styles.container}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.header}>
           <Text style={styles.title}>Settings</Text>
         </View>
@@ -237,8 +241,6 @@ export default function SettingsScreen() {
         <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
           <Text style={styles.signOutText}>Sign Out</Text>
         </TouchableOpacity>
-
-        <View style={styles.bottomSpace} />
       </ScrollView>
 
       {/* Budget Modal */}
@@ -347,6 +349,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  scrollContent: {
+    paddingBottom: theme.spacing.xl, // Minimal space for bottom tab bar
+  },
   header: {
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.xl,
@@ -446,9 +451,6 @@ const styles = StyleSheet.create({
     color: colors.danger,
     fontSize: 16,
     fontWeight: '600',
-  },
-  bottomSpace: {
-    height: theme.spacing.xxl,
   },
   modalOverlay: {
     flex: 1,

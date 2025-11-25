@@ -63,7 +63,7 @@ export default function HomeScreen({ navigation }: Props) {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 100, // Space for FAB
+    paddingBottom: theme.spacing.xl, // Minimal space for bottom tab bar
   },
   header: {
     paddingHorizontal: theme.spacing.lg,
