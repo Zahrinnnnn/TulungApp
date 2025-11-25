@@ -165,12 +165,7 @@ export default function ProcessingScreen({ navigation, route }: Props) {
               <>
                 <TouchableOpacity style={styles.primaryButton} onPress={() => {
                   haptics.light();
-                  // TODO: Navigate to upgrade screen when Phase 5 is implemented
-                  Alert.alert(
-                    'Upgrade to Pro',
-                    'Pro features coming soon! Get unlimited OCR scans, priority support, and more.',
-                    [{ text: 'OK' }]
-                  );
+                  navigation.navigate('Paywall');
                 }}>
                   <Text style={styles.primaryButtonText}>Upgrade to Pro</Text>
                 </TouchableOpacity>

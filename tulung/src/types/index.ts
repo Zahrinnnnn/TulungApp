@@ -27,6 +27,7 @@ export type HomeStackParamList = {
     fromOCR?: boolean;
   };
   Camera: undefined;
+  Paywall: undefined;
 };
 
 export type ExpensesStackParamList = {
