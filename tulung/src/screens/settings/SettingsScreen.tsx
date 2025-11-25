@@ -11,6 +11,7 @@ import {
   Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import { colors, theme } from '../../constants/colors';
 import { DEFAULT_DAILY_BUDGET } from '../../constants/defaults';
 import { useAuthStore } from '../../store/authStore';
@@ -31,6 +32,7 @@ const CURRENCIES = [
 ];
 
 export default function SettingsScreen() {
+  const navigation = useNavigation<any>();
   const { user, userProfile, signOut, setUserProfile } = useAuthStore();
   const [showBudgetModal, setShowBudgetModal] = useState(false);
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
@@ -203,7 +205,13 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>SUBSCRIPTION</Text>
           {!userProfile?.is_pro && (
-            <TouchableOpacity style={styles.upgradeButton}>
+            <TouchableOpacity
+              style={styles.upgradeButton}
+              onPress={() => {
+                haptics.light();
+                navigation.navigate('Home', { screen: 'Paywall' });
+              }}
+            >
               <Text style={styles.upgradeButtonText}>Upgrade to Pro</Text>
             </TouchableOpacity>
           )}
