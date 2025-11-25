@@ -164,7 +164,7 @@ export default function SettingsScreen() {
             <Text style={styles.settingLabel}>Daily Budget</Text>
             <View style={styles.settingValueContainer}>
               <Text style={styles.settingValue}>
-                ${userProfile?.daily_budget?.toFixed(2) || DEFAULT_DAILY_BUDGET.toFixed(2)}
+                {userProfile?.daily_budget?.toFixed(2) || DEFAULT_DAILY_BUDGET.toFixed(2)}
               </Text>
               <Text style={styles.chevron}>›</Text>
             </View>
