@@ -1,5 +1,6 @@
-# Markdown documentation (local only)
+# Markdown documentation (local only) - EXCEPT README.md
 *.md
+!README.md
 
 # Environment variables
 .env
