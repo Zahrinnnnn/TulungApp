@@ -1,6 +1,6 @@
 # Tulung - AI-Powered Expense Tracking App 📱💰
 
-> **Tulung** (Indonesian: "Help") - Your personal AI assistant for effortless expense tracking
+> **Tulung** - Your personal AI assistant for effortless expense tracking
 
 An intelligent expense tracking mobile app that uses AI-powered receipt scanning to automatically extract transaction details from photos.
 
