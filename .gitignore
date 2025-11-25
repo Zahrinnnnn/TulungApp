@@ -1,0 +1,128 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# Expo
+.expo/
+dist/
+web-build/
+
+# Native
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+*.pem
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local
+*.local
+
+# Build
+build/
+dist/
+
+# Android
+*.apk
+*.aab
+
+# iOS
+*.ipa
+Pods/
+
+# User home directory files (Linux)
+.ICEauthority
+.Xauthority
+.android/
+.bash_history
+.bash_logout
+.bashrc
+.bashrc.original
+.cache/
+.claude.json
+.claude.json.backup
+.claude/
+.config/
+.continue/
+.css-linter/
+.dbus/
+.dmrc
+.dotnet/
+.emulator_console_auth_token
+.face
+.face.icon
+.git-credentials
+.gitconfig
+.gnupg/
+.gradle/
+.java/
+.local/
+.mozilla/
+.npm/
+.ollama/
+.pki/
+.profile
+.python_history
+.rustup/
+.skiko/
+.ssh/
+.sudo_as_admin_successful
+.var/
+.viminfo
+.vscode/argv.json
+.vscode/extensions/
+.wget-hsts
+.xsession-errors
+.xsession-errors.old
+.zprofile
+.zsh_history
+.zshrc
+
+# Other projects in parent directory
+nely-mvp/
+cybersecurity-portfolio/
+AI Cloud Engineer/
+Android/
+BorneoByte/
+Cybersecurity-Portfolio/
+Desktop/
+Downloads/
+Metasploitable2-Linux/
+Pictures/
+VirtualBox VMs/
+android-studio-*.tar.gz
+fluxion/
+go/
+*.zip
+
+# Temporary files
+*.tmp
+*.temp
