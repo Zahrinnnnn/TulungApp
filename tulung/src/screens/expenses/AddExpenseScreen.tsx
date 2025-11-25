@@ -18,7 +18,9 @@ import { haptics } from '../../utils/haptics';
 import { validation } from '../../utils/validation';
 import { useAuthStore } from '../../store/authStore';
 import { useExpenseStore } from '../../store/expenseStore';
-import { createExpense, uploadReceiptImage, updateScanQuota, updateStreak } from '../../services/expenseService';
+import { createExpense, uploadReceiptImage, updateScanQuota } from '../../services/expenseService';
+import { hasMilestoneBeenShown, markMilestoneAsShown } from '../../utils/streakUtils';
+import MilestoneModal from '../../components/MilestoneModal';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CATEGORIES } from '../../constants/categories';
 
@@ -68,6 +70,10 @@ export default function AddExpenseScreen({ navigation, route }: Props) {
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
 
+  // Milestone modal state
+  const [showMilestone, setShowMilestone] = useState(false);
+  const [currentMilestone, setCurrentMilestone] = useState<any>(null);
+
   const handleSave = async () => {
     // Validation
     if (!amount || !validation.amount(parseFloat(amount))) {
@@ -113,27 +119,38 @@ export default function AddExpenseScreen({ navigation, route }: Props) {
       };
 
       if (__DEV__) console.log('💾 Creating expense with data:', JSON.stringify(expenseData, null, 2));
-      const newExpense = await createExpense(user.id, expenseData);
-      if (__DEV__) console.log('✅ Expense created in DB:', JSON.stringify(newExpense, null, 2));
+      const result = await createExpense(user.id, expenseData);
+      if (__DEV__) console.log('✅ Expense created in DB:', JSON.stringify(result.expense, null, 2));
 
       // 3. Update scan quota ONLY if from OCR (not manual entry)
       if (fromOCR) {
         await updateScanQuota(user.id);
       }
 
-      // 4. Update streak (don't block on error)
-      await updateStreak(user.id);
+      // 4. Add to local store
+      addExpense(result.expense);
 
-      // 5. Add to local store
-      addExpense(newExpense);
+      // 5. Check for milestone and show modal if applicable
+      if (result.milestone && result.newStreak) {
+        const alreadyShown = await hasMilestoneBeenShown(user.id, result.newStreak);
+        if (!alreadyShown) {
+          setCurrentMilestone(result.milestone);
+          setShowMilestone(true);
+          await markMilestoneAsShown(user.id, result.newStreak);
+        }
+      }
 
       haptics.success();
-      Alert.alert('Success', 'Expense added successfully!', [
-        {
-          text: 'OK',
-          onPress: () => navigation.goBack(),
-        },
-      ]);
+
+      // If no milestone, show success alert
+      if (!result.milestone || await hasMilestoneBeenShown(user.id, result.newStreak || 0)) {
+        Alert.alert('Success', 'Expense added successfully!', [
+          {
+            text: 'OK',
+            onPress: () => navigation.goBack(),
+          },
+        ]);
+      }
     } catch (error: any) {
       console.error('Error saving expense:', error);
       haptics.error();
@@ -331,6 +348,16 @@ export default function AddExpenseScreen({ navigation, route }: Props) {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      {/* Milestone Modal */}
+      <MilestoneModal
+        visible={showMilestone}
+        milestone={currentMilestone}
+        onDismiss={() => {
+          setShowMilestone(false);
+          navigation.goBack();
+        }}
+      />
     </SafeAreaView>
   );
 }

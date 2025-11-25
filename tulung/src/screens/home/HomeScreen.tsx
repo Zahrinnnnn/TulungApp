@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -8,8 +8,12 @@ import { useAuthStore } from '../../store/authStore';
 import { useExpenseStore } from '../../store/expenseStore';
 import { currencyUtils } from '../../utils/currency';
 import { calculateDailyTotal, getTodayExpenses } from '../../utils/expenseUtils';
+import { checkBudgetAlert } from '../../utils/budgetUtils';
 import CameraButton from '../../components/CameraButton';
 import ExpenseCard from '../../components/ExpenseCard';
+import BurnRateMeter from '../../components/BurnRateMeter';
+import StreakBadge from '../../components/StreakBadge';
+import BudgetAlert from '../../components/BudgetAlert';
 import { HomeStackParamList } from '../../types';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'HomeScreen'>;
@@ -17,6 +21,7 @@ type Props = NativeStackScreenProps<HomeStackParamList, 'HomeScreen'>;
 export default function HomeScreen({ navigation }: Props) {
   const { user, userProfile } = useAuthStore();
   const { expenses, loading, fetchExpenses } = useExpenseStore();
+  const [budgetAlertDismissed, setBudgetAlertDismissed] = useState(false);
 
   // Fetch expenses on mount
   useEffect(() => {
@@ -24,6 +29,11 @@ export default function HomeScreen({ navigation }: Props) {
       fetchExpenses(user.id);
     }
   }, [user?.id]);
+
+  // Reset budget alert dismissed state when date changes
+  useEffect(() => {
+    setBudgetAlertDismissed(false);
+  }, [new Date().toDateString()]);
 
   const handleImageSelected = (uri: string) => {
     // Navigate to ProcessingReceipt screen for OCR
@@ -49,18 +59,14 @@ export default function HomeScreen({ navigation }: Props) {
   const todayExpenses = getTodayExpenses(expenses);
   const todayTotal = calculateDailyTotal(expenses, new Date());
   const dailyBudget = userProfile?.daily_budget || DEFAULT_DAILY_BUDGET;
-  const percentSpent = dailyBudget > 0 ? (todayTotal / dailyBudget) * 100 : 0;
+  const streakCount = userProfile?.streak_count || 0;
+  const currency = userProfile?.currency || 'USD';
 
   // Get recent expenses (limit to 10)
   const recentExpenses = expenses.slice(0, 10);
 
-  // Determine meter color based on percentage
-  const getMeterColor = () => {
-    if (percentSpent >= 100) return colors.burnOver;
-    if (percentSpent >= 80) return colors.burnDanger;
-    if (percentSpent >= 60) return colors.burnCaution;
-    return colors.burnSafe;
-  };
+  // Check for budget alert
+  const budgetAlert = !budgetAlertDismissed ? checkBudgetAlert(todayTotal, dailyBudget) : null;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -77,32 +83,26 @@ export default function HomeScreen({ navigation }: Props) {
           <Text style={styles.title}>Tulung</Text>
         </View>
 
+        {/* Budget Alert Banner */}
+        {budgetAlert && (
+          <BudgetAlert
+            alert={budgetAlert}
+            onDismiss={() => setBudgetAlertDismissed(true)}
+          />
+        )}
+
         {/* Burn Rate Meter */}
         <View style={styles.meterContainer}>
-          <View
-            style={[
-              styles.meterPlaceholder,
-              { borderColor: getMeterColor() },
-            ]}
-          >
-            <Text style={styles.meterText}>
-              {currencyUtils.format(todayTotal, userProfile?.currency || 'USD')}
-            </Text>
-            <Text style={styles.meterDivider}>/</Text>
-            <Text style={styles.meterBudget}>
-              {currencyUtils.format(dailyBudget, userProfile?.currency || 'USD')}
-            </Text>
-            <Text style={[styles.meterPercent, { color: getMeterColor() }]}>
-              {percentSpent.toFixed(0)}% spent
-            </Text>
-          </View>
+          <BurnRateMeter
+            todayTotal={todayTotal}
+            dailyBudget={dailyBudget}
+            currency={currency}
+          />
         </View>
 
-        {/* Streak */}
+        {/* Streak Badge */}
         <View style={styles.streakContainer}>
-          <Text style={styles.streakText}>
-            🔥 {userProfile?.streak_count || 0}-day streak
-          </Text>
+          <StreakBadge streakCount={streakCount} />
         </View>
 
         {/* Recent Expenses Section */}
@@ -175,46 +175,14 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   meterContainer: {
-    alignItems: 'center',
-    paddingVertical: theme.spacing.xl,
     backgroundColor: colors.white,
     marginBottom: theme.spacing.md,
-  },
-  meterPlaceholder: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    borderWidth: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  meterText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: colors.textPrimary,
-  },
-  meterDivider: {
-    fontSize: 20,
-    color: colors.textTertiary,
-  },
-  meterBudget: {
-    fontSize: 20,
-    color: colors.textSecondary,
-  },
-  meterPercent: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginTop: theme.spacing.sm,
   },
   streakContainer: {
     alignItems: 'center',
-    paddingBottom: theme.spacing.lg,
+    paddingVertical: theme.spacing.lg,
     backgroundColor: colors.white,
     marginBottom: theme.spacing.md,
-  },
-  streakText: {
-    fontSize: 16,
-    color: colors.textSecondary,
   },
   expensesSection: {
     flex: 1,

@@ -23,6 +23,8 @@ export const colors = {
   white: '#FFFFFF',
   background: '#F8F9FA',
   border: '#E9ECEF',
+  cardBackground: '#FFFFFF',
+  shadow: '#000000',
 
   // Text
   textPrimary: '#1A1D29',
@@ -69,6 +71,9 @@ export const theme = {
     medium: 12,
     large: 16,
     xlarge: 20,
+    lg: 16,
+    xl: 20,
+    xxl: 24,
     round: 999,
   },
 

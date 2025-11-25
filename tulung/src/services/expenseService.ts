@@ -3,6 +3,7 @@ import { ExpenseInput } from '../types/database';
 import { readAsStringAsync, EncodingType, getInfoAsync } from 'expo-file-system/legacy';
 import { decode } from 'base64-arraybuffer';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
+import { updateStreak, getMilestoneInfo } from '../utils/streakUtils';
 
 /**
  * Service for managing expenses
@@ -13,11 +14,12 @@ const FREE_TIER_SCAN_LIMIT = 10;
 
 /**
  * Create a new expense
+ * Also triggers streak update and returns milestone info if applicable
  */
 export const createExpense = async (
   userId: string,
   expenseData: ExpenseInput
-): Promise<any> => {
+): Promise<{ expense: any; newStreak?: number; milestone?: any }> => {
   try {
     const { data, error } = await supabase
       .from('expenses')
@@ -38,7 +40,25 @@ export const createExpense = async (
       throw error;
     }
 
-    return data;
+    // Update streak (don't block on error)
+    let newStreak: number | undefined = undefined;
+    let milestone: any | undefined = undefined;
+
+    try {
+      newStreak = await updateStreak(userId);
+      if (newStreak) {
+        milestone = getMilestoneInfo(newStreak);
+      }
+    } catch (streakError) {
+      console.error('Error updating streak:', streakError);
+      // Continue - streak update failure shouldn't block expense creation
+    }
+
+    return {
+      expense: data,
+      newStreak,
+      milestone,
+    };
   } catch (error) {
     console.error('Error creating expense:', error);
     throw error;
@@ -202,60 +222,5 @@ export const updateScanQuota = async (userId: string): Promise<void> => {
   } catch (error) {
     console.error('Error updating scan quota:', error);
     // Don't throw - quota update shouldn't block expense creation
-  }
-};
-
-/**
- * Update user streak
- */
-export const updateStreak = async (userId: string): Promise<void> => {
-  try {
-    const { data: user, error: fetchError } = await supabase
-      .from('users')
-      .select('last_snap_date, streak_count')
-      .eq('id', userId)
-      .single();
-
-    if (fetchError) throw fetchError;
-
-    const today = new Date().toISOString().split('T')[0];
-    const lastSnapDate = user.last_snap_date;
-
-    let newStreakCount = user.streak_count || 0;
-
-    if (lastSnapDate) {
-      const lastSnap = new Date(lastSnapDate);
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = yesterday.toISOString().split('T')[0];
-
-      if (lastSnapDate === today) {
-        // Already logged today, no change
-        return;
-      } else if (lastSnapDate === yesterdayStr) {
-        // Consecutive day, increment streak
-        newStreakCount += 1;
-      } else {
-        // Streak broken, reset to 1
-        newStreakCount = 1;
-      }
-    } else {
-      // First expense ever
-      newStreakCount = 1;
-    }
-
-    // Update user
-    const { error: updateError } = await supabase
-      .from('users')
-      .update({
-        last_snap_date: today,
-        streak_count: newStreakCount,
-      })
-      .eq('id', userId);
-
-    if (updateError) throw updateError;
-  } catch (error) {
-    console.error('Error updating streak:', error);
-    // Don't throw - streak update shouldn't block expense creation
   }
 };
