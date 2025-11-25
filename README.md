@@ -1,4 +1,4 @@
-# Tulung - AI-Powered Expense Tracking App 📱💰
+# TulungApp
 
 > **Tulung** - Your personal AI assistant for effortless expense tracking
 
