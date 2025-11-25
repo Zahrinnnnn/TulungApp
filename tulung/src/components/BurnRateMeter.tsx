@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { colors, theme } from '../constants/colors';
-import { haptics } from '../utils/haptics';
 
 interface BurnRateMeterProps {
   todayTotal: number;
   dailyBudget: number;
   currency: string;
-  onPress?: () => void;
 }
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
@@ -17,7 +15,6 @@ export default function BurnRateMeter({
   todayTotal,
   dailyBudget,
   currency,
-  onPress,
 }: BurnRateMeterProps) {
   const [animatedValue] = useState(new Animated.Value(0));
   const [pulseValue] = useState(new Animated.Value(1));
@@ -47,7 +44,7 @@ export default function BurnRateMeter({
       toValue: percentSpent,
       duration: 800,
       easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
+      useNativeDriver: false, // Cannot use native driver for stroke animations
     }).start();
   }, [percentSpent]);
 
@@ -76,13 +73,6 @@ export default function BurnRateMeter({
     extrapolate: 'clamp',
   });
 
-  const handlePress = () => {
-    if (onPress) {
-      haptics.light();
-      onPress();
-    }
-  };
-
   // Format currency
   const formatAmount = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -94,12 +84,7 @@ export default function BurnRateMeter({
   };
 
   return (
-    <TouchableOpacity
-      style={styles.container}
-      onPress={handlePress}
-      disabled={!onPress}
-      activeOpacity={onPress ? 0.7 : 1}
-    >
+    <View style={styles.container}>
       <Animated.View style={{ transform: [{ scale: pulseValue }] }}>
         <Svg width={size} height={size}>
           {/* Background circle */}
@@ -138,11 +123,7 @@ export default function BurnRateMeter({
           </Text>
         </View>
       </Animated.View>
-
-      {onPress && (
-        <Text style={styles.hintText}>Tap to view breakdown</Text>
-      )}
-    </TouchableOpacity>
+    </View>
   );
 }
 
@@ -177,11 +158,6 @@ const styles = StyleSheet.create({
   percentText: {
     fontSize: 14,
     fontWeight: '600',
-    marginTop: theme.spacing.sm,
-  },
-  hintText: {
-    fontSize: 12,
-    color: colors.textTertiary,
     marginTop: theme.spacing.sm,
   },
 });
