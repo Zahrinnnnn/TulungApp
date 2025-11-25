@@ -1,9 +1,8 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text, StyleSheet, Platform } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import HomeStackNavigator from './HomeStackNavigator';
-import ExpensesScreen from '../screens/expenses/ExpensesScreen';
 import SettingsScreen from '../screens/settings/SettingsScreen';
 import { MainTabParamList } from '../types';
 import { colors } from '../constants/colors';
@@ -32,13 +31,6 @@ export default function MainNavigator() {
         component={HomeStackNavigator}
         options={{
           tabBarIcon: ({ color }) => <Text style={[styles.icon, { color }]}>🏠</Text>,
-        }}
-      />
-      <Tab.Screen
-        name="Expenses"
-        component={ExpensesScreen}
-        options={{
-          tabBarIcon: ({ color }) => <Text style={[styles.icon, { color }]}>📋</Text>,
         }}
       />
       <Tab.Screen
