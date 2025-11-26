@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,9 @@ import { DEFAULT_DAILY_BUDGET } from '../../constants/defaults';
 import { useAuthStore } from '../../store/authStore';
 import { haptics } from '../../utils/haptics';
 import { supabase } from '../../services/supabase';
+import QuotaBadge from '../../components/QuotaBadge';
+import ProBadge from '../../components/ProBadge';
+import { FREE_TIER_SCAN_LIMIT } from '../../constants/defaults';
 
 const CURRENCIES = [
   { code: 'USD', symbol: '$', name: 'US Dollar' },
@@ -38,6 +41,30 @@ export default function SettingsScreen() {
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
   const [budgetInput, setBudgetInput] = useState(userProfile?.daily_budget?.toString() || DEFAULT_DAILY_BUDGET.toString());
   const [updating, setUpdating] = useState(false);
+  const [scansUsed, setScansUsed] = useState(0);
+
+  // Fetch scan quota on mount and when screen is focused
+  useEffect(() => {
+    const fetchScanQuota = async () => {
+      if (!user?.id) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('scan_quota')
+          .select('scans_this_month')
+          .eq('user_id', user.id)
+          .single();
+
+        if (!error && data) {
+          setScansUsed(data.scans_this_month);
+        }
+      } catch (error) {
+        console.error('Error fetching scan quota:', error);
+      }
+    };
+
+    fetchScanQuota();
+  }, [user?.id]);
 
   const handleSignOut = () => {
     haptics.warning();
@@ -148,8 +175,8 @@ export default function SettingsScreen() {
           <View style={styles.card}>
             <Text style={styles.email}>{userProfile?.email || 'Loading...'}</Text>
             {userProfile?.is_pro && (
-              <View style={styles.proBadge}>
-                <Text style={styles.proBadgeText}>Pro Member</Text>
+              <View style={{ marginTop: theme.spacing.sm }}>
+                <ProBadge />
               </View>
             )}
           </View>
@@ -189,9 +216,11 @@ export default function SettingsScreen() {
           <Text style={styles.sectionTitle}>USAGE</Text>
           <View style={styles.settingRow}>
             <Text style={styles.settingLabel}>Scans this month</Text>
-            <Text style={styles.settingValue}>
-              {userProfile?.is_pro ? 'Unlimited' : '0/10'}
-            </Text>
+            <QuotaBadge
+              scansUsed={scansUsed}
+              scanLimit={FREE_TIER_SCAN_LIMIT}
+              isPro={userProfile?.is_pro || false}
+            />
           </View>
           <View style={styles.settingRow}>
             <Text style={styles.settingLabel}>Current streak</Text>
@@ -389,19 +418,6 @@ const styles = StyleSheet.create({
   email: {
     fontSize: 16,
     color: colors.textPrimary,
-  },
-  proBadge: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: theme.borderRadius.small,
-    alignSelf: 'flex-start',
-    marginTop: theme.spacing.sm,
-  },
-  proBadgeText: {
-    color: colors.white,
-    fontSize: 12,
-    fontWeight: '600',
   },
   settingRow: {
     flexDirection: 'row',
