@@ -24,11 +24,6 @@ export default function CameraTabScreen() {
   const navigation = useNavigation<any>();
   const [modalVisible, setModalVisible] = useState(false);
 
-  // Show options immediately when this screen is focused
-  useEffect(() => {
-    showOptions();
-  }, []);
-
   const handleTakePhoto = async () => {
     setModalVisible(false);
     haptics.medium();
@@ -125,6 +120,11 @@ export default function CameraTabScreen() {
       setModalVisible(true);
     }
   };
+
+  // Show options immediately when this screen is focused
+  useEffect(() => {
+    showOptions();
+  }, []);
 
   return (
     <View style={styles.container}>

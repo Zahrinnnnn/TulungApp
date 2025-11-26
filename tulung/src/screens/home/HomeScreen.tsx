@@ -9,7 +9,6 @@ import { useExpenseStore } from '../../store/expenseStore';
 import { currencyUtils } from '../../utils/currency';
 import { calculateDailyTotal, getTodayExpenses } from '../../utils/expenseUtils';
 import { checkBudgetAlert } from '../../utils/budgetUtils';
-import CameraButton from '../../components/CameraButton';
 import ExpenseCard from '../../components/ExpenseCard';
 import BurnRateMeter from '../../components/BurnRateMeter';
 import StreakBadge from '../../components/StreakBadge';
@@ -34,16 +33,6 @@ export default function HomeScreen({ navigation }: Props) {
   useEffect(() => {
     setBudgetAlertDismissed(false);
   }, [new Date().toDateString()]);
-
-  const handleImageSelected = (uri: string) => {
-    // Navigate to ProcessingReceipt screen for OCR
-    navigation.navigate('ProcessingReceipt', { imageUri: uri });
-  };
-
-  const handleManualEntry = () => {
-    // Navigate to AddExpense screen without image
-    navigation.navigate('AddExpense', {});
-  };
 
   const handleExpensePress = (expenseId: string) => {
     navigation.navigate('ExpenseDetail', { expenseId });
@@ -142,12 +131,6 @@ export default function HomeScreen({ navigation }: Props) {
           )}
         </View>
       </ScrollView>
-
-      {/* Camera Button (FAB) */}
-      <CameraButton
-        onImageSelected={handleImageSelected}
-        onManualEntry={handleManualEntry}
-      />
     </SafeAreaView>
   );
 }
