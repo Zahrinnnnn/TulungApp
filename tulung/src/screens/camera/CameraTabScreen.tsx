@@ -3,7 +3,7 @@
  * Handles camera/gallery selection when camera tab is tapped
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import {
   Modal,
   Pressable,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { colors, theme } from '../../constants/colors';
 import { haptics } from '../../utils/haptics';
 import { captureImageFromCamera, pickImageFromGallery } from '../../utils/imageUtils';
@@ -121,10 +121,12 @@ export default function CameraTabScreen() {
     }
   };
 
-  // Show options immediately when this screen is focused
-  useEffect(() => {
-    showOptions();
-  }, []);
+  // Show options every time this screen is focused
+  useFocusEffect(
+    React.useCallback(() => {
+      showOptions();
+    }, [])
+  );
 
   return (
     <View style={styles.container}>
