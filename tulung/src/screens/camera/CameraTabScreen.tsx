@@ -149,7 +149,8 @@ export default function CameraTabScreen() {
             navigation.navigate('Home');
           }}
         >
-          <View style={styles.modalContent}>
+          <Pressable onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Add Receipt</Text>
 
             <TouchableOpacity style={styles.modalOption} onPress={handleTakePhoto}>
@@ -181,6 +182,7 @@ export default function CameraTabScreen() {
               <Text style={styles.modalCancelText}>Cancel</Text>
             </TouchableOpacity>
           </View>
+          </Pressable>
         </Pressable>
       </Modal>
     </View>
@@ -190,7 +192,7 @@ export default function CameraTabScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: 'transparent',
   },
   modalOverlay: {
     flex: 1,
