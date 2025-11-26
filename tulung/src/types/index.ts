@@ -14,6 +14,9 @@ export type AuthStackParamList = {
 
 export type MainTabParamList = {
   Home: undefined;
+  Feature1: undefined;
+  CameraTab: undefined;
+  Feature2: undefined;
   Settings: undefined;
 };
 
