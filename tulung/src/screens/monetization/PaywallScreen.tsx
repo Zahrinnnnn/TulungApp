@@ -3,26 +3,102 @@
  * Shows benefits and pricing for Tulung Pro
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, theme } from '../../constants/colors';
 import { haptics } from '../../utils/haptics';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import {
+  getOfferings,
+  purchasePackage,
+  hasActiveProSubscription,
+} from '../../services/revenuecatService';
+import { useAuthStore } from '../../store/authStore';
+import type { PurchasesPackage } from 'react-native-purchases';
 
 type Props = NativeStackScreenProps<any, 'Paywall'>;
 
 export default function PaywallScreen({ navigation }: Props) {
+  const { userProfile, setUserProfile } = useAuthStore();
+  const [loading, setLoading] = useState(true);
+  const [purchasing, setPurchasing] = useState(false);
+  const [packageToPurchase, setPackageToPurchase] = useState<PurchasesPackage | null>(null);
+
+  // Fetch offerings on mount
+  useEffect(() => {
+    const loadOfferings = async () => {
+      try {
+        const offering = await getOfferings();
+        if (offering && offering.availablePackages.length > 0) {
+          // Get the first package (monthly subscription)
+          setPackageToPurchase(offering.availablePackages[0]);
+        } else {
+          console.warn('No packages available');
+        }
+      } catch (error) {
+        console.error('Error loading offerings:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadOfferings();
+  }, []);
+
   const handleSubscribe = async () => {
+    if (!packageToPurchase) {
+      haptics.error();
+      Alert.alert('Error', 'No subscription package available. Please try again later.');
+      return;
+    }
+
+    setPurchasing(true);
     haptics.heavy();
-    // TODO: Implement RevenueCat purchase flow
-    console.log('Subscribe to Pro - RevenueCat integration pending');
+
+    try {
+      const { customerInfo, success } = await purchasePackage(packageToPurchase);
+
+      if (success && hasActiveProSubscription(customerInfo)) {
+        // Update local user profile with Pro status
+        if (userProfile) {
+          const expiresAt = customerInfo.entitlements.active['pro']?.expirationDate;
+          setUserProfile({
+            ...userProfile,
+            is_pro: true,
+            pro_expires_at: expiresAt || null,
+          });
+        }
+
+        haptics.success();
+        Alert.alert(
+          'Welcome to Pro!',
+          'You now have unlimited receipt scans and all premium features.',
+          [
+            {
+              text: 'Get Started',
+              onPress: () => navigation.goBack(),
+            },
+          ]
+        );
+      }
+    } catch (error: any) {
+      haptics.error();
+      Alert.alert(
+        'Purchase Failed',
+        error.message || 'Something went wrong. Please try again.'
+      );
+    } finally {
+      setPurchasing(false);
+    }
   };
 
   const handleMaybeLater = () => {
@@ -105,17 +181,25 @@ export default function PaywallScreen({ navigation }: Props) {
 
         {/* CTA Buttons */}
         <TouchableOpacity
-          style={styles.subscribeButton}
+          style={[styles.subscribeButton, (loading || purchasing) && styles.subscribeButtonDisabled]}
           onPress={handleSubscribe}
           activeOpacity={0.8}
+          disabled={loading || purchasing}
         >
-          <Text style={styles.subscribeButtonText}>Subscribe to Pro</Text>
+          {purchasing ? (
+            <ActivityIndicator color={colors.white} />
+          ) : (
+            <Text style={styles.subscribeButtonText}>
+              {loading ? 'Loading...' : 'Subscribe to Pro'}
+            </Text>
+          )}
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.laterButton}
           onPress={handleMaybeLater}
           activeOpacity={0.6}
+          disabled={purchasing}
         >
           <Text style={styles.laterButtonText}>Maybe Later</Text>
         </TouchableOpacity>
@@ -306,6 +390,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 5,
+  },
+  subscribeButtonDisabled: {
+    backgroundColor: colors.textTertiary,
+    shadowOpacity: 0,
   },
   subscribeButtonText: {
     fontSize: 18,

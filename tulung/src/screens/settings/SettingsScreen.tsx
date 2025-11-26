@@ -20,6 +20,7 @@ import { supabase } from '../../services/supabase';
 import QuotaBadge from '../../components/QuotaBadge';
 import ProBadge from '../../components/ProBadge';
 import { FREE_TIER_SCAN_LIMIT } from '../../constants/defaults';
+import { restorePurchases, hasActiveProSubscription } from '../../services/revenuecatService';
 
 const CURRENCIES = [
   { code: 'USD', symbol: '$', name: 'US Dollar' },
@@ -158,6 +159,45 @@ export default function SettingsScreen() {
     }
   };
 
+  const handleRestorePurchases = async () => {
+    setUpdating(true);
+    haptics.medium();
+
+    try {
+      const customerInfo = await restorePurchases();
+
+      if (hasActiveProSubscription(customerInfo)) {
+        // Update local user profile with Pro status
+        if (userProfile) {
+          const expiresAt = customerInfo.entitlements.active['pro']?.expirationDate;
+          setUserProfile({
+            ...userProfile,
+            is_pro: true,
+            pro_expires_at: expiresAt || null,
+          });
+        }
+
+        haptics.success();
+        Alert.alert(
+          'Purchases Restored',
+          'Your Pro subscription has been restored successfully!'
+        );
+      } else {
+        haptics.light();
+        Alert.alert(
+          'No Purchases Found',
+          'We could not find any purchases to restore for this account.'
+        );
+      }
+    } catch (error) {
+      console.error('Error restoring purchases:', error);
+      haptics.error();
+      Alert.alert('Error', 'Failed to restore purchases. Please try again.');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <ScrollView
@@ -244,7 +284,11 @@ export default function SettingsScreen() {
               <Text style={styles.upgradeButtonText}>Upgrade to Pro</Text>
             </TouchableOpacity>
           )}
-          <TouchableOpacity style={styles.settingRow}>
+          <TouchableOpacity
+            style={styles.settingRow}
+            onPress={handleRestorePurchases}
+            disabled={updating}
+          >
             <Text style={styles.settingLabel}>Restore Purchases</Text>
           </TouchableOpacity>
         </View>
