@@ -22,13 +22,14 @@ import {
   purchasePackage,
   hasActiveProSubscription,
 } from '../../services/revenuecatService';
+import { syncProStatus } from '../../services/proStatusService';
 import { useAuthStore } from '../../store/authStore';
 import type { PurchasesPackage } from 'react-native-purchases';
 
 type Props = NativeStackScreenProps<any, 'Paywall'>;
 
 export default function PaywallScreen({ navigation }: Props) {
-  const { userProfile, setUserProfile } = useAuthStore();
+  const { user, userProfile, setUserProfile } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
   const [packageToPurchase, setPackageToPurchase] = useState<PurchasesPackage | null>(null);
@@ -68,14 +69,18 @@ export default function PaywallScreen({ navigation }: Props) {
       const { customerInfo, success } = await purchasePackage(packageToPurchase);
 
       if (success && hasActiveProSubscription(customerInfo)) {
-        // Update local user profile with Pro status
-        if (userProfile) {
-          const expiresAt = customerInfo.entitlements.active['pro']?.expirationDate;
-          setUserProfile({
-            ...userProfile,
-            is_pro: true,
-            pro_expires_at: expiresAt || null,
-          });
+        // Sync Pro status to Supabase database
+        if (user?.id) {
+          const syncedStatus = await syncProStatus(user.id);
+
+          // Update local user profile with synced Pro status
+          if (userProfile) {
+            setUserProfile({
+              ...userProfile,
+              is_pro: syncedStatus.is_pro,
+              pro_expires_at: syncedStatus.pro_expires_at,
+            });
+          }
         }
 
         haptics.success();

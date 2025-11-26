@@ -21,6 +21,7 @@ import QuotaBadge from '../../components/QuotaBadge';
 import ProBadge from '../../components/ProBadge';
 import { FREE_TIER_SCAN_LIMIT } from '../../constants/defaults';
 import { restorePurchases, hasActiveProSubscription } from '../../services/revenuecatService';
+import { syncProStatus } from '../../services/proStatusService';
 
 const CURRENCIES = [
   { code: 'USD', symbol: '$', name: 'US Dollar' },
@@ -167,14 +168,18 @@ export default function SettingsScreen() {
       const customerInfo = await restorePurchases();
 
       if (hasActiveProSubscription(customerInfo)) {
-        // Update local user profile with Pro status
-        if (userProfile) {
-          const expiresAt = customerInfo.entitlements.active['pro']?.expirationDate;
-          setUserProfile({
-            ...userProfile,
-            is_pro: true,
-            pro_expires_at: expiresAt || null,
-          });
+        // Sync Pro status to Supabase database
+        if (user?.id) {
+          const syncedStatus = await syncProStatus(user.id);
+
+          // Update local user profile with synced Pro status
+          if (userProfile) {
+            setUserProfile({
+              ...userProfile,
+              is_pro: syncedStatus.is_pro,
+              pro_expires_at: syncedStatus.pro_expires_at,
+            });
+          }
         }
 
         haptics.success();
